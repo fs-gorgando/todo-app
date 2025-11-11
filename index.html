@@ -375,13 +375,13 @@
         const SUPABASE_URL = 'https://thpzjlxlhvynbnmyactc.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRocHpqbHhsaHZ5bmJubXlhY3RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4OTA2MTAsImV4cCI6MjA3ODQ2NjYxMH0.0vYl_6cBxfr6ysfUvfFmSLsqD2Bj6hKUi8ExSA402tY';
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
         let todos = [];
 
         // Check authentication state on load
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
             if (session) {
                 currentUser = session.user;
                 showApp();
@@ -392,7 +392,7 @@
         });
 
         // Listen for auth changes
-        supabase.auth.onAuthStateChange((event, session) => {
+        supabaseClient.auth.onAuthStateChange((event, session) => {
             if (session) {
                 currentUser = session.user;
                 showApp();
@@ -432,7 +432,7 @@
 
             authMessage.innerHTML = '<div class="loading">Logging in...</div>';
 
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: email,
                 password: password,
             });
@@ -462,7 +462,7 @@
 
             authMessage.innerHTML = '<div class="loading">Creating account...</div>';
 
-            const { data, error } = await supabase.auth.signUp({
+            const { data, error } = await supabaseClient.auth.signUp({
                 email: email,
                 password: password,
             });
@@ -477,7 +477,7 @@
 
         // Handle logout
         async function handleLogout() {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
             todos = [];
         }
 
@@ -496,7 +496,7 @@
 
         // Load todos from Supabase
         async function loadTodos() {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('todos')
                 .select('*')
                 .order('created_at', { ascending: true });
@@ -520,7 +520,7 @@
                 return;
             }
 
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('todos')
                 .insert([
                     {
@@ -544,7 +544,7 @@
 
         // Toggle todo completion
         async function toggleTodo(id, completed) {
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('todos')
                 .update({ completed: !completed })
                 .eq('id', id);
@@ -559,7 +559,7 @@
 
         // Delete todo
         async function deleteTodo(id) {
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('todos')
                 .delete()
                 .eq('id', id);
