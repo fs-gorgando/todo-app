@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Todo List</title>
+    <title>Todo List - Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -35,6 +36,152 @@
             margin-bottom: 25px;
             text-align: center;
             font-size: 28px;
+        }
+
+        .auth-container {
+            display: none;
+        }
+
+        .auth-container.active {
+            display: block;
+        }
+
+        .app-container {
+            display: none;
+        }
+
+        .app-container.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+        }
+
+        .btn-danger:hover {
+            background: #ee3344;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #3c3;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .toggle-auth {
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .toggle-auth a {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .user-email {
+            color: #555;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            padding: 6px 12px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #5a6268;
         }
 
         .input-container {
@@ -149,40 +296,287 @@
             color: #666;
             font-size: 14px;
         }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>My Todo List</h1>
 
-        <div class="input-container">
-            <input
-                type="text"
-                id="todoInput"
-                placeholder="What needs to be done?"
-                autocomplete="off"
-            >
-            <button id="addBtn">Add</button>
+        <!-- Authentication Container -->
+        <div id="authContainer" class="auth-container active">
+            <div id="authMessage"></div>
+
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password">
+                </div>
+                <button class="btn" onclick="handleLogin()">Log In</button>
+                <div class="toggle-auth">
+                    Don't have an account? <a onclick="toggleAuthMode()">Sign Up</a>
+                </div>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signupForm" style="display: none;">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" placeholder="Enter your email" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)" autocomplete="new-password">
+                </div>
+                <button class="btn" onclick="handleSignup()">Sign Up</button>
+                <div class="toggle-auth">
+                    Already have an account? <a onclick="toggleAuthMode()">Log In</a>
+                </div>
+            </div>
         </div>
 
-        <ul id="todoList"></ul>
+        <!-- App Container -->
+        <div id="appContainer" class="app-container">
+            <div class="user-info">
+                <span class="user-email" id="userEmail"></span>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
 
-        <div class="stats">
-            <span id="statsText">No tasks yet</span>
+            <div class="input-container">
+                <input
+                    type="text"
+                    id="todoInput"
+                    placeholder="What needs to be done?"
+                    autocomplete="off"
+                >
+                <button id="addBtn" onclick="addTodo()">Add</button>
+            </div>
+
+            <ul id="todoList"></ul>
+
+            <div class="stats">
+                <span id="statsText">No tasks yet</span>
+            </div>
         </div>
     </div>
 
     <script>
-        // Load todos from localStorage or initialize empty array
-        let todos = JSON.parse(localStorage.getItem('todos')) || [];
+        // Initialize Supabase client
+        const SUPABASE_URL = 'https://thpzjlxlhvynbnmyactc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRocHpqbHhsaHZ5bmJubXlhY3RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4OTA2MTAsImV4cCI6MjA3ODQ2NjYxMH0.0vYl_6cBxfr6ysfUvfFmSLsqD2Bj6hKUi8ExSA402tY';
 
-        const todoInput = document.getElementById('todoInput');
-        const addBtn = document.getElementById('addBtn');
-        const todoList = document.getElementById('todoList');
-        const statsText = document.getElementById('statsText');
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let todos = [];
+
+        // Check authentication state on load
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                currentUser = session.user;
+                showApp();
+                loadTodos();
+            } else {
+                showAuth();
+            }
+        });
+
+        // Listen for auth changes
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                currentUser = session.user;
+                showApp();
+                loadTodos();
+            } else {
+                currentUser = null;
+                showAuth();
+            }
+        });
+
+        // Toggle between login and signup
+        function toggleAuthMode() {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const authMessage = document.getElementById('authMessage');
+
+            if (loginForm.style.display === 'none') {
+                loginForm.style.display = 'block';
+                signupForm.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                signupForm.style.display = 'block';
+            }
+            authMessage.innerHTML = '';
+        }
+
+        // Handle login
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const authMessage = document.getElementById('authMessage');
+
+            if (!email || !password) {
+                authMessage.innerHTML = '<div class="error-message">Please enter both email and password</div>';
+                return;
+            }
+
+            authMessage.innerHTML = '<div class="loading">Logging in...</div>';
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                authMessage.innerHTML = `<div class="error-message">${error.message}</div>`;
+            } else {
+                authMessage.innerHTML = '<div class="success-message">Login successful!</div>';
+            }
+        }
+
+        // Handle signup
+        async function handleSignup() {
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const authMessage = document.getElementById('authMessage');
+
+            if (!email || !password) {
+                authMessage.innerHTML = '<div class="error-message">Please enter both email and password</div>';
+                return;
+            }
+
+            if (password.length < 6) {
+                authMessage.innerHTML = '<div class="error-message">Password must be at least 6 characters</div>';
+                return;
+            }
+
+            authMessage.innerHTML = '<div class="loading">Creating account...</div>';
+
+            const { data, error } = await supabase.auth.signUp({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                authMessage.innerHTML = `<div class="error-message">${error.message}</div>`;
+            } else {
+                authMessage.innerHTML = '<div class="success-message">Account created! You can now log in.</div>';
+                setTimeout(toggleAuthMode, 2000);
+            }
+        }
+
+        // Handle logout
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            todos = [];
+        }
+
+        // Show authentication screen
+        function showAuth() {
+            document.getElementById('authContainer').classList.add('active');
+            document.getElementById('appContainer').classList.remove('active');
+        }
+
+        // Show app screen
+        function showApp() {
+            document.getElementById('authContainer').classList.remove('active');
+            document.getElementById('appContainer').classList.add('active');
+            document.getElementById('userEmail').textContent = currentUser.email;
+        }
+
+        // Load todos from Supabase
+        async function loadTodos() {
+            const { data, error } = await supabase
+                .from('todos')
+                .select('*')
+                .order('created_at', { ascending: true });
+
+            if (error) {
+                console.error('Error loading todos:', error);
+                return;
+            }
+
+            todos = data;
+            renderTodos();
+        }
+
+        // Add new todo
+        async function addTodo() {
+            const todoInput = document.getElementById('todoInput');
+            const text = todoInput.value.trim();
+
+            if (text === '') {
+                todoInput.focus();
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('todos')
+                .insert([
+                    {
+                        user_id: currentUser.id,
+                        text: text,
+                        completed: false
+                    }
+                ])
+                .select();
+
+            if (error) {
+                console.error('Error adding todo:', error);
+                alert('Failed to add todo');
+                return;
+            }
+
+            todoInput.value = '';
+            todoInput.focus();
+            await loadTodos();
+        }
+
+        // Toggle todo completion
+        async function toggleTodo(id, completed) {
+            const { error } = await supabase
+                .from('todos')
+                .update({ completed: !completed })
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error updating todo:', error);
+                return;
+            }
+
+            await loadTodos();
+        }
+
+        // Delete todo
+        async function deleteTodo(id) {
+            const { error } = await supabase
+                .from('todos')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error deleting todo:', error);
+                return;
+            }
+
+            await loadTodos();
+        }
 
         // Render all todos
         function renderTodos() {
+            const todoList = document.getElementById('todoList');
+            const statsText = document.getElementById('statsText');
+
             todoList.innerHTML = '';
 
             if (todos.length === 0) {
@@ -191,69 +585,37 @@
                 return;
             }
 
-            todos.forEach((todo, index) => {
+            todos.forEach((todo) => {
                 const li = document.createElement('li');
                 li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
 
-                li.innerHTML = `
-                    <input
-                        type="checkbox"
-                        class="checkbox"
-                        ${todo.completed ? 'checked' : ''}
-                        onchange="toggleTodo(${index})"
-                    >
-                    <span class="todo-text">${escapeHtml(todo.text)}</span>
-                    <button class="delete-btn" onclick="deleteTodo(${index})">Delete</button>
-                `;
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'checkbox';
+                checkbox.checked = todo.completed;
+                checkbox.onchange = () => toggleTodo(todo.id, todo.completed);
 
+                const span = document.createElement('span');
+                span.className = 'todo-text';
+                span.textContent = todo.text;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = () => deleteTodo(todo.id);
+
+                li.appendChild(checkbox);
+                li.appendChild(span);
+                li.appendChild(deleteBtn);
                 todoList.appendChild(li);
             });
 
             updateStats();
         }
 
-        // Add new todo
-        function addTodo() {
-            const text = todoInput.value.trim();
-
-            if (text === '') {
-                todoInput.focus();
-                return;
-            }
-
-            todos.push({
-                text: text,
-                completed: false,
-                createdAt: new Date().toISOString()
-            });
-
-            saveTodos();
-            renderTodos();
-            todoInput.value = '';
-            todoInput.focus();
-        }
-
-        // Toggle todo completion
-        function toggleTodo(index) {
-            todos[index].completed = !todos[index].completed;
-            saveTodos();
-            renderTodos();
-        }
-
-        // Delete todo
-        function deleteTodo(index) {
-            todos.splice(index, 1);
-            saveTodos();
-            renderTodos();
-        }
-
-        // Save to localStorage
-        function saveTodos() {
-            localStorage.setItem('todos', JSON.stringify(todos));
-        }
-
         // Update statistics
         function updateStats() {
+            const statsText = document.getElementById('statsText');
             const total = todos.length;
             const completed = todos.filter(t => t.completed).length;
             const remaining = total - completed;
@@ -267,23 +629,17 @@
             }
         }
 
-        // Escape HTML to prevent XSS
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Event listeners
-        addBtn.addEventListener('click', addTodo);
-        todoInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addTodo();
+        // Handle Enter key on todo input
+        document.addEventListener('DOMContentLoaded', () => {
+            const todoInput = document.getElementById('todoInput');
+            if (todoInput) {
+                todoInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        addTodo();
+                    }
+                });
             }
         });
-
-        // Initial render
-        renderTodos();
     </script>
 </body>
 </html>
