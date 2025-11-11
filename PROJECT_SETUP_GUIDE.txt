@@ -1,0 +1,146 @@
+================================================================================
+HOW TO BUILD A WEB APP WITH BACKEND & DEPLOYMENT
+================================================================================
+
+This guide documents the generic steps for building a full-stack web application
+with authentication, database, and deployment.
+
+================================================================================
+1. BUILD THE FRONTEND
+================================================================================
+
+- Create a single HTML file with embedded CSS and JavaScript
+- Build the UI and basic functionality (localStorage for testing)
+- Test locally by opening the HTML file in a browser
+
+Tools Used:
+- None (vanilla HTML/CSS/JavaScript)
+
+================================================================================
+2. SET UP VERSION CONTROL
+================================================================================
+
+- Initialize Git repository: git init
+- Create GitHub repository
+- Connect local repo to GitHub: git remote add origin <repo-url>
+- Commit and push code: git add . && git commit -m "message" && git push
+
+URLs:
+- GitHub: https://github.com
+
+================================================================================
+3. SET UP BACKEND DATABASE (SUPABASE)
+================================================================================
+
+- Create account at https://supabase.com
+- Create a new project
+- Get credentials from Project Settings > API:
+  * Project URL (e.g., https://xxxxx.supabase.co)
+  * Anon/Public API Key
+- Create database tables using SQL Editor:
+  * Define table schema (id, user_id, data columns, timestamps)
+  * Enable Row Level Security (RLS)
+  * Create RLS policies for user data isolation
+- Configure authentication:
+  * Go to Authentication > Configuration
+  * Enable/disable email confirmations as needed
+
+URLs:
+- Supabase Dashboard: https://app.supabase.com
+- Supabase Docs: https://supabase.com/docs
+
+================================================================================
+4. INTEGRATE BACKEND INTO FRONTEND
+================================================================================
+
+- Add Supabase JavaScript library via CDN
+- Initialize Supabase client with URL and anon key
+- Replace localStorage with Supabase database calls
+- Add authentication UI (login/signup forms)
+- Implement CRUD operations using Supabase client API
+- Test authentication and data persistence
+
+Key Code Pattern:
+const supabaseClient = window.supabase.createClient(URL, KEY);
+await supabaseClient.auth.signUp({ email, password });
+await supabaseClient.from('table').insert([data]);
+
+================================================================================
+5. DEPLOY TO PRODUCTION (VERCEL)
+================================================================================
+
+Option A: Vercel Dashboard (Easiest)
+- Go to https://vercel.com/new
+- Import Git Repository from GitHub
+- Configure project (usually auto-detects settings)
+- Click Deploy
+- Get live URL (e.g., your-app.vercel.app)
+
+Option B: Vercel CLI
+- Install: npm install -g vercel
+- Login: vercel login
+- Deploy: vercel --name your-app --yes
+
+URLs:
+- Vercel Dashboard: https://vercel.com
+- Vercel Docs: https://vercel.com/docs
+
+================================================================================
+6. ONGOING DEVELOPMENT
+================================================================================
+
+Workflow:
+1. Make changes to code locally
+2. Test locally by opening HTML file
+3. Commit changes: git add . && git commit -m "description"
+4. Push to GitHub: git push origin main
+5. Vercel auto-deploys (30-60 seconds)
+
+================================================================================
+KEY URLS REFERENCE
+================================================================================
+
+Development:
+- GitHub: https://github.com
+- Local testing: Open index.html in browser
+
+Backend:
+- Supabase: https://supabase.com
+- Database: https://supabase.com/dashboard/project/[PROJECT_ID]/editor
+- SQL Editor: https://supabase.com/dashboard/project/[PROJECT_ID]/sql/new
+- Auth Settings: https://supabase.com/dashboard/project/[PROJECT_ID]/settings/auth
+- API Settings: https://supabase.com/dashboard/project/[PROJECT_ID]/settings/api
+
+Deployment:
+- Vercel: https://vercel.com
+- New Deployment: https://vercel.com/new
+- Dashboard: https://vercel.com/dashboard
+
+================================================================================
+COMMON TROUBLESHOOTING
+================================================================================
+
+Issue: Supabase signup hangs
+Fix: Disable email confirmations in Supabase Auth settings
+
+Issue: JavaScript errors with Supabase
+Fix: Use window.supabase.createClient() instead of destructuring
+
+Issue: Users can see other users' data
+Fix: Check Row Level Security policies in database
+
+Issue: Vercel deployment fails
+Fix: Ensure project name is lowercase, no spaces, no special chars
+
+================================================================================
+PROJECT STACK USED
+================================================================================
+
+Frontend: HTML + CSS + Vanilla JavaScript
+Backend: Supabase (PostgreSQL + Authentication + RLS)
+Deployment: Vercel
+Version Control: Git + GitHub
+
+Total Cost: $0 (all free tiers)
+
+================================================================================
